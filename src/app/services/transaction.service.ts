@@ -1,21 +1,44 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from '@angular/fire/firestore';
+import {
+  Firestore,
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  deleteDoc,
+  updateDoc
+} from '@angular/fire/firestore';
+
+import { Auth } from '@angular/fire/auth';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TransactionService {
 
-  constructor(private firestore: Firestore) {}
+  constructor(
+    private firestore: Firestore,
+    private auth: Auth // ✅ ADD THIS
+  ) {}
+
+  // ✅ helper to get user-specific collection
+  private getCollection() {
+  const uid = this.auth.currentUser?.uid;
+
+  if (!uid) {
+    // return empty safe collection instead of crashing
+    return collection(this.firestore, `temp/guest/transactions`);
+  }
+
+  return collection(this.firestore, `users/${uid}/transactions`);
+}
 
   async addTransaction(transaction: any) {
-    const ref = collection(this.firestore, 'transactions');
-    return await addDoc(ref, transaction);
+    return await addDoc(this.getCollection(), transaction);
   }
 
   async getTransactions(): Promise<any[]> {
-    const ref = collection(this.firestore, 'transactions');
-    const snapshot = await getDocs(ref);
+    const snapshot = await getDocs(this.getCollection());
 
     return snapshot.docs.map(doc => ({
       id: doc.id,
@@ -24,12 +47,17 @@ export class TransactionService {
   }
 
   async deleteTransaction(id: string) {
-    const ref = doc(this.firestore, `transactions/${id}`);
-    return await deleteDoc(ref);
+    const uid = this.auth.currentUser?.uid;
+    return await deleteDoc(
+      doc(this.firestore, `users/${uid}/transactions/${id}`)
+    );
   }
 
   async updateTransaction(id: string, data: any) {
-    const ref = doc(this.firestore, `transactions/${id}`);
-    return await updateDoc(ref, data);
+    const uid = this.auth.currentUser?.uid;
+    return await updateDoc(
+      doc(this.firestore, `users/${uid}/transactions/${id}`),
+      data
+    );
   }
 }
