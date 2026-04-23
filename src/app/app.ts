@@ -3,36 +3,79 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TransactionService } from './services/transaction.service';
 
+import { MatCardModule } from '@angular/material/card';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatInputModule,
+    MatButtonModule,
+    MatSelectModule,
+    MatFormFieldModule
+  ],
   template: `
-    <h1>Expense Tracker</h1>
+    <div style="max-width: 600px; margin: auto; padding: 20px;">
 
-    <h3>Add / Edit Transaction</h3>
+      <mat-card>
+        <h1>Expense Tracker</h1>
 
-    <input [(ngModel)]="amount" placeholder="Amount" type="number">
-    <input [(ngModel)]="category" placeholder="Category">
+        <h3>Add / Edit Transaction</h3>
 
-    <select [(ngModel)]="type">
-      <option value="expense">Expense</option>
-      <option value="income">Income</option>
-    </select>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          
+          <mat-form-field style="flex:1;">
+            <input matInput [(ngModel)]="amount" placeholder="Amount" type="number">
+          </mat-form-field>
 
-    <button (click)="save()">
-      {{ editingId ? 'Update' : 'Add' }}
-    </button>
+          <mat-form-field style="flex:1;">
+            <input matInput [(ngModel)]="category" placeholder="Category">
+          </mat-form-field>
 
-    <hr>
+          <mat-form-field style="flex:1;">
+            <mat-select [(ngModel)]="type">
+              <mat-option value="expense">Expense</mat-option>
+              <mat-option value="income">Income</mat-option>
+            </mat-select>
+          </mat-form-field>
 
-    <button (click)="load()">Load Transactions</button>
+        </div>
 
-    <div *ngFor="let t of transactions">
-      {{ t.category }} - {{ t.amount }} ({{ t.type }})
+        <button mat-raised-button color="primary" (click)="save()">
+          {{ editingId ? 'Update' : 'Add' }}
+        </button>
+      </mat-card>
 
-      <button (click)="edit(t)">Edit</button>
-      <button (click)="delete(t.id)">Delete</button>
+      <br>
+
+      <button mat-button (click)="load()">Load Transactions</button>
+
+      <mat-form-field style="width:100%;">
+        <input matInput [(ngModel)]="filterCategory" placeholder="Filter by category">
+      </mat-form-field>
+
+      <div *ngFor="let t of transactions.filter(t => t.category.toLowerCase().includes(filterCategory.toLowerCase()))">
+        <mat-card style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+          
+          <div>
+            <b>{{ t.category }}</b> - {{ t.amount }} ({{ t.type }})
+          </div>
+
+          <div>
+            <button mat-button (click)="edit(t)">Edit</button>
+            <button mat-button color="warn" (click)="delete(t.id)">Delete</button>
+          </div>
+
+        </mat-card>
+      </div>
+
     </div>
   `
 })
@@ -43,8 +86,9 @@ export class App {
   type: 'income' | 'expense' = 'expense';
 
   editingId: string | null = null;
-
   transactions: any[] = [];
+
+  filterCategory = '';
 
   constructor(private transactionService: TransactionService) {}
 
